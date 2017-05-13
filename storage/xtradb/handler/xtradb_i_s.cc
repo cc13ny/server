@@ -47,7 +47,7 @@ this program; if not, write to the Free Software Foundation, Inc.,
 
 #define OK(expr)		\
 	if ((expr) != 0) {	\
-		DBUG_RETURN(1);	\
+		goto done;  	\
 	}
 
 #define RETURN_IF_INNODB_NOT_STARTED(plugin_name)			\
@@ -218,6 +218,7 @@ static int xtradb_read_view_fill_table(THD* thd, TABLE_LIST* tables, Item*)
 	Field**	fields;
 	TABLE* table;
 	char		trx_id[TRX_ID_MAX_LEN + 1];
+	int		res = 1;
 
 
 	DBUG_ENTER("xtradb_read_view_fill_table");
@@ -252,7 +253,9 @@ static int xtradb_read_view_fill_table(THD* thd, TABLE_LIST* tables, Item*)
 
 	OK(schema_table_store_record(thd, table));
 
-	DBUG_RETURN(0);
+	res = 0;
+done:
+	DBUG_RETURN(res);
 }
 
 
@@ -340,6 +343,7 @@ static int xtradb_internal_hash_tables_fill_table(THD* thd, TABLE_LIST* tables, 
 	TABLE*		table;
 	ulong		btr_search_sys_constant;
 	ulong		btr_search_sys_variable;
+	int		res = 1;
 
 	DBUG_ENTER("xtradb_internal_hash_tables_fill_table");
 
@@ -463,7 +467,9 @@ static int xtradb_internal_hash_tables_fill_table(THD* thd, TABLE_LIST* tables, 
 	  OK(schema_table_store_record(thd, table));
 	}
 
-	DBUG_RETURN(0);
+	res = 0;
+done:
+	DBUG_RETURN(res);
 }
 
 static int xtradb_internal_hash_tables_init(void* p)

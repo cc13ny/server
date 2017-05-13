@@ -153,7 +153,7 @@ struct buf_page_info_t{
 
 #define OK(expr)		\
 	if ((expr) != 0) {	\
-		DBUG_RETURN(1);	\
+		goto done;   \
 	}
 
 #define RETURN_IF_INNODB_NOT_STARTED(plugin_name)			\
@@ -603,6 +603,7 @@ fill_innodb_trx_from_cache(
 	ulint	rows_num;
 	char	lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
 	ulint	i;
+	int	ret = 1;
 
 	DBUG_ENTER("fill_innodb_trx_from_cache");
 
@@ -742,7 +743,9 @@ fill_innodb_trx_from_cache(
 		OK(schema_table_store_record(thd, table));
 	}
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -931,6 +934,7 @@ fill_innodb_locks_from_cache(
 	ulint	rows_num;
 	char	lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
 	ulint	i;
+	int	ret = 1;
 
 	DBUG_ENTER("fill_innodb_locks_from_cache");
 
@@ -1005,7 +1009,9 @@ fill_innodb_locks_from_cache(
 		OK(schema_table_store_record(thd, table));
 	}
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -1136,6 +1142,7 @@ fill_innodb_lock_waits_from_cache(
 	char	requested_lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
 	char	blocking_lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
 	ulint	i;
+	int	ret = 1;
 
 	DBUG_ENTER("fill_innodb_lock_waits_from_cache");
 
@@ -1186,7 +1193,9 @@ fill_innodb_lock_waits_from_cache(
 		OK(schema_table_store_record(thd, table));
 	}
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -2452,6 +2461,7 @@ i_s_metrics_fill(
 	monitor_info_t*	monitor_info;
 	mon_type_t	min_val;
 	mon_type_t	max_val;
+	int		ret = 1;
 
 	DBUG_ENTER("i_s_metrics_fill");
 	fields = table_to_fill->field;
@@ -2706,7 +2716,9 @@ i_s_metrics_fill(
 		OK(schema_table_store_record(thd, table_to_fill));
 	}
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -2828,6 +2840,7 @@ i_s_stopword_fill(
 	Field**	fields;
 	ulint	i = 0;
 	TABLE*	table = (TABLE*) tables->table;
+	int	ret = 1;
 
 	DBUG_ENTER("i_s_stopword_fill");
 
@@ -2843,7 +2856,9 @@ i_s_stopword_fill(
 		i++;
 	}
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -2946,6 +2961,7 @@ i_s_fts_deleted_generic_fill(
 	fts_table_t		fts_table;
 	fts_doc_ids_t*		deleted;
 	dict_table_t*		user_table;
+	int			ret = 1;
 
 	DBUG_ENTER("i_s_fts_deleted_generic_fill");
 
@@ -2999,6 +3015,8 @@ i_s_fts_deleted_generic_fill(
 		OK(schema_table_store_record(thd, table));
 	}
 
+	ret = 0;
+done:
 	trx_free_for_background(trx);
 
 	fts_doc_ids_free(deleted);
@@ -3007,7 +3025,7 @@ i_s_fts_deleted_generic_fill(
 
 	rw_lock_s_unlock(&dict_operation_lock);
 
-	DBUG_RETURN(0);
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -3254,6 +3272,7 @@ i_s_fts_index_cache_fill_one_index(
 	fts_string_t		conv_str;
 	uint			dummy_errors;
 	char*			word_str;
+	int			ret = 1;
 
 	DBUG_ENTER("i_s_fts_index_cache_fill_one_index");
 
@@ -3342,9 +3361,11 @@ i_s_fts_index_cache_fill_one_index(
 		}
 	}
 
+	ret = 0;
+done:
 	ut_free(conv_str.f_str);
 
-	DBUG_RETURN(0);
+	DBUG_RETURN(ret);
 }
 /*******************************************************************//**
 Fill the dynamic table INFORMATION_SCHEMA.INNODB_FT_INDEX_CACHED
@@ -3612,7 +3633,7 @@ i_s_fts_index_table_fill_one_fetch(
 	uint			dummy_errors;
 	char*			word_str;
 	ulint			words_size;
-	int			ret = 0;
+	int			ret = 1;
 
 	DBUG_ENTER("i_s_fts_index_table_fill_one_fetch");
 
@@ -3702,6 +3723,8 @@ i_s_fts_index_table_fill_one_fetch(
 		}
 	}
 
+	ret = 0;
+done:
 	i_s_fts_index_table_free_one_fetch(words);
 
 	DBUG_RETURN(ret);
@@ -3960,6 +3983,7 @@ i_s_fts_config_fill(
 	ulint			i = 0;
 	dict_index_t*		index = NULL;
 	unsigned char		str[FTS_MAX_CONFIG_VALUE_LEN + 1];
+	int			ret = 1;
 
 	DBUG_ENTER("i_s_fts_config_fill");
 
@@ -4040,6 +4064,8 @@ i_s_fts_config_fill(
 		i++;
 	}
 
+	ret = 0;
+done:
 	fts_sql_commit(trx);
 
 	trx_free_for_background(trx);
@@ -4048,7 +4074,7 @@ i_s_fts_config_fill(
 
 	rw_lock_s_unlock(&dict_operation_lock);
 
-	DBUG_RETURN(0);
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -4426,6 +4452,7 @@ i_s_innodb_stats_fill(
 {
 	TABLE*			table;
 	Field**			fields;
+	int			ret = 1;
 
 	DBUG_ENTER("i_s_innodb_stats_fill");
 
@@ -4541,7 +4568,11 @@ i_s_innodb_stats_fill(
 	OK(fields[IDX_BUF_STATS_UNZIP_CUR]->store(
 		static_cast<double>(info->unzip_cur)));
 
-	DBUG_RETURN(schema_table_store_record(thd, table));
+	OK(schema_table_store_record(thd, table));
+
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -4863,6 +4894,7 @@ i_s_innodb_buffer_page_fill(
 {
 	TABLE*			table;
 	Field**			fields;
+	int			ret = 1;
 
 	DBUG_ENTER("i_s_innodb_buffer_page_fill");
 
@@ -5031,7 +5063,9 @@ i_s_innodb_buffer_page_fill(
 		}
 	}
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -5572,6 +5606,7 @@ i_s_innodb_buf_page_lru_fill(
 	TABLE*			table;
 	Field**			fields;
 	mem_heap_t*		heap;
+	int			ret = 1;
 
 	DBUG_ENTER("i_s_innodb_buf_page_lru_fill");
 
@@ -5731,9 +5766,11 @@ i_s_innodb_buf_page_lru_fill(
 		mem_heap_empty(heap);
 	}
 
+	ret = 0;
+done:
 	mem_heap_free(heap);
 
-	DBUG_RETURN(0);
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -6027,6 +6064,7 @@ i_s_dict_fill_sys_tables(
 	ulint	zip_size	= dict_tf_get_zip_size(table->flags);
 	const char* file_format;
 	const char* row_format;
+	int	ret = 1;
 
 	file_format = trx_sys_file_format_id_to_name(atomic_blobs);
 	if (!compact) {
@@ -6062,7 +6100,9 @@ i_s_dict_fill_sys_tables(
 
 	OK(schema_table_store_record(thd, table_to_fill));
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 /*******************************************************************//**
 Function to go through each record in SYS_TABLES table, and fill the
@@ -6307,6 +6347,7 @@ i_s_dict_fill_sys_tablestats(
 	TABLE*		table_to_fill)	/*!< in/out: fill this table */
 {
 	Field**		fields;
+	int		ret = 1;
 
 	DBUG_ENTER("i_s_dict_fill_sys_tablestats");
 
@@ -6355,7 +6396,9 @@ i_s_dict_fill_sys_tablestats(
 
 	OK(schema_table_store_record(thd, table_to_fill));
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -6579,6 +6622,7 @@ i_s_dict_fill_sys_indexes(
 	TABLE*		table_to_fill)	/*!< in/out: fill this table */
 {
 	Field**		fields;
+	int		ret = 1;
 
 	DBUG_ENTER("i_s_dict_fill_sys_indexes");
 
@@ -6605,7 +6649,9 @@ i_s_dict_fill_sys_indexes(
 
 	OK(schema_table_store_record(thd, table_to_fill));
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 /*******************************************************************//**
 Function to go through each record in SYS_INDEXES table, and fill the
@@ -6821,6 +6867,7 @@ i_s_dict_fill_sys_columns(
 	TABLE*		table_to_fill)	/*!< in/out: fill this table */
 {
 	Field**		fields;
+	int		ret = 1;
 
 	DBUG_ENTER("i_s_dict_fill_sys_columns");
 
@@ -6840,7 +6887,9 @@ i_s_dict_fill_sys_columns(
 
 	OK(schema_table_store_record(thd, table_to_fill));
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 /*******************************************************************//**
 Function to fill information_schema.innodb_sys_columns with information
@@ -7028,6 +7077,7 @@ i_s_dict_fill_sys_fields(
 	TABLE*		table_to_fill)	/*!< in/out: fill this table */
 {
 	Field**		fields;
+	int		ret = 1;
 
 	DBUG_ENTER("i_s_dict_fill_sys_fields");
 
@@ -7041,7 +7091,9 @@ i_s_dict_fill_sys_fields(
 
 	OK(schema_table_store_record(thd, table_to_fill));
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 /*******************************************************************//**
 Function to go through each record in SYS_FIELDS table, and fill the
@@ -7252,6 +7304,7 @@ i_s_dict_fill_sys_foreign(
 	TABLE*		table_to_fill)	/*!< in/out: fill this table */
 {
 	Field**		fields;
+	int		ret = 1;
 
 	DBUG_ENTER("i_s_dict_fill_sys_foreign");
 
@@ -7271,7 +7324,9 @@ i_s_dict_fill_sys_foreign(
 
 	OK(schema_table_store_record(thd, table_to_fill));
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 
 /*******************************************************************//**
@@ -7470,6 +7525,7 @@ i_s_dict_fill_sys_foreign_cols(
 	TABLE*		table_to_fill)	/*!< in/out: fill this table */
 {
 	Field**		fields;
+	int		ret = 1;
 
 	DBUG_ENTER("i_s_dict_fill_sys_foreign_cols");
 
@@ -7485,7 +7541,9 @@ i_s_dict_fill_sys_foreign_cols(
 
 	OK(schema_table_store_record(thd, table_to_fill));
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 /*******************************************************************//**
 Function to populate INFORMATION_SCHEMA.innodb_sys_foreign_cols table. Loop
@@ -7716,6 +7774,7 @@ i_s_dict_fill_sys_tablespaces(
 	ulint	zip_size	= fsp_flags_get_zip_size(flags);
 	const char* file_format;
 	const char* row_format;
+	int	ret = 1;
 
 	DBUG_ENTER("i_s_dict_fill_sys_tablespaces");
 
@@ -7752,7 +7811,9 @@ i_s_dict_fill_sys_tablespaces(
 
 	OK(schema_table_store_record(thd, table_to_fill));
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 /*******************************************************************//**
 Function to populate INFORMATION_SCHEMA.INNODB_SYS_TABLESPACES table.
@@ -7931,6 +7992,7 @@ i_s_dict_fill_sys_datafiles(
 	TABLE*		table_to_fill)	/*!< in/out: fill this table */
 {
 	Field**		fields;
+	int		ret = 1;
 
 	DBUG_ENTER("i_s_dict_fill_sys_datafiles");
 
@@ -7942,7 +8004,9 @@ i_s_dict_fill_sys_datafiles(
 
 	OK(schema_table_store_record(thd, table_to_fill));
 
-	DBUG_RETURN(0);
+	ret = 0;
+done:
+	DBUG_RETURN(ret);
 }
 /*******************************************************************//**
 Function to populate INFORMATION_SCHEMA.INNODB_SYS_DATAFILES table.
